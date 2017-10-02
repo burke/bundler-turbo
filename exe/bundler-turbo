@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# After loading bundler/cli, load bundler/turbo, then unhook.
+module Kernel
+  alias_method(:require_without_bundler_turbo, :require)
+  def require(path)
+    ret = require_without_bundler_turbo(path)
+    if path == 'bundler/cli'
+      Kernel.send(:alias_method, :require, :require_without_bundler_turbo)
+      return false unless require('bundler/turbo')
+    end
+    ret
+  end
+end
+
+entry = ENV['PATH'].split(':').detect do |path|
+  File.executable?("#{path}/bundle")
+end
+load(File.join(entry, 'bundle'))
